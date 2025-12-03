@@ -1,6 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 // Set up all variables in the .env file
 require('dotenv').config();
@@ -19,8 +19,7 @@ const app = express();
 // ========= Middlewares =================
 app.use(morgan('dev')); // logger
 app.use(express.json()); // body parser
-require('./config/passport'); // passport config
-
+require('./config/passport');
 
 // ========= Routes ======================
 app.use('/api/users', require('./routes/userRoutes'));

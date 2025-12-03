@@ -7,11 +7,13 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_CALLBACK_URL, // e.g., 'http://localhost:4000/api/users/auth/github/callback'
+      callbackURL: process.env.GITHUB_CALLBACK_URL, // e.g., 'http://localhost:3001/api/users/auth/github/callback'
     },
     // This is the "verify" callback
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log(profile);
+        
         // The "profile" object contains the user's GitHub information
         const existingUser = await User.findOne({ githubId: profile.id });
  
@@ -24,8 +26,12 @@ passport.use(
         const newUser = new User({
           githubId: profile.id,
           username: profile.username,
-          email: profile.emails ? profile.emails[0].value : 'test10@gmail.com', // Some providers return an array of emails
+          email: profile.emails ? profile.emails[0].value : 'test@mail.com', 
+          // Some providers return an array of emails
+          password: Math.random().toString(36).slice(-8)
         });
+
+        console.log(newUser);
  
         await newUser.save();
         done(null, newUser);

@@ -5,10 +5,9 @@ const {
   registerUser,
   loginUser,
 } = require("../controllers/userController");
+
+const { authMiddleware,  adminOnly, signToken} = require("../middlewares/auth");
 const passport = require('passport');
-
-
-const { authMiddleware,  adminOnly} = require("../middlewares/auth");
 
 // Router
 const userRouter = express.Router();
@@ -33,13 +32,15 @@ userRouter.post("/register", registerUser);
  */
 userRouter.post("/login", loginUser);
 
+
 // Route to start the OAuth flow
 // When a user visits this URL, they will be redirected to GitHub to log in.
 userRouter.get(
   '/auth/github',
   passport.authenticate('github', { scope: ['user:email'] }) // Request email scope
 );
- 
+
+
 // The callback route that GitHub will redirect to after the user approves.
 userRouter.get(
   '/auth/github/callback',
