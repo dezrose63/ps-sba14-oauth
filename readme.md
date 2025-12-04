@@ -1,66 +1,380 @@
 <img width="498" height="103" alt="image" src="https://github.com/user-attachments/assets/38f3794e-58c4-4b3d-a31e-4ef089121296" />
 
-#  Per Scholas Software Engineer Bootcamp SBA 14
-## Do you want to get ***free*** tech training from Per Scholas? 
+# Per Scholas Software Engineer Bootcamp LAB 14.2
 
-## [Click Here to find out how!](https://perscholas.referralrock.com/l/7MIDHLPB/) 
+## Do you want to get **_free_** tech training from Per Scholas?
 
-*************************************************************************************************************
+## [Click Here to find out how!](https://perscholas.referralrock.com/l/7MIDHLPB/)
+
+---
 
 ![screenshot of server.js](image.png)
 
+# Lab 14.2
 
-# SBA 14
-## Secure Web Portal
+## Secure Record Storage
 
-# Scenario
+## Scenario
 
-“Innovate Inc.” is ready for the final phase of its new user portal. They need a complete, secure backend service that combines all the features you’ve been working on. This service will be the single point of entry for all users, managing their identities and their private data.
+You have been given a pre-existing “Notes” API. It has full CRUD (Create, Read, Update, Delete) functionality and is protected by authentication middleware, meaning only logged-in users can access the endpoints. However, there’s a significant flaw: any authenticated user can view, update, or delete any note, regardless of who created it.
 
-Your task is to build a secure Express application that allows users to register, log in (using both their email/password and a third-party provider like GitHub), and manage a private collection of personal “bookmarks” (or notes, tasks, etc.). This project will be the culmination of all the skills you’ve acquired in this module, from hashing passwords to implementing complex OAuth 2.0 flows.
-
-A key principle for this project is Don’t Repeat Yourself (DRY). You are encouraged to reuse and adapt the code you’ve already written in previous labs and lessons. This is a common practice in software development and a critical skill to demonstrate.
+Your task is to implement authorization logic to ensure that users can only access and manage the notes they personally own.
 
 # Instructions
 
-# Task 1: Project Setup
+For this lab, you will be provided with a starter codebase. The starter code contains a simple Express API with user authentication and a /api/notes endpoint.
 
-Initialize Project: Set up a new project with npm and install express, mongoose, bcrypt, jsonwebtoken, dotenv, passport, and passport-github2.
+# Task 1: Associate Notes with Users
 
-Environment: Create a .env file to store your MONGO_URI, PORT, JWT_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, and GITHUB_CALLBACK_URL.
+Update the Note Model: Add a new field to the Note schema (models/Note.js). This field should be named user (or owner) and should store the ObjectId of the user who created the note. It should be a required reference to the User model.
 
-Security: Create a .gitignore file.
+---
 
-Project Structure: Organize your code into a modular structure (e.g., config, models, routes, utils).
+// Example snippet for the Note schema
 
-# Task 2: Models and Configuration
+---
 
-User Model: Create a User model. It should accommodate both local and third-party authentication. This means a user might have a password or a githubId, but not necessarily both. The email field should be unique and will serve as the primary link between a user’s local and GitHub-based identity.
+```js
+user: {
+  type: Schema.Types.ObjectId,
+  ref: 'User',
+  required: true,
+}
+```
 
-Bookmark Model: Create a simple model for the user’s private resources (e.g., Bookmark). It must include a field to store the _id of the user who owns it (e.g., user: { type: Schema.Types.ObjectId, ref: 'User' }).
-Passport Configuration: Set up a passport.js configuration file. This is where you will define your passport-github2 strategy, including the verify callback logic from Lesson 4. Remember, the callback should handle both finding existing users and creating new ones.
+Modify the “Create Note” Route: In your notes route file (routes/api/notes.js), find the POST / route. When a new note is created, you must associate it with the currently logged-in user. The authenticated user’s data should be available on req.user from the authentication middleware. Save the user’s \_id to the new note’s user field.
 
-# Task 3: Local Authentication API
+# Task 2: Implement Ownership-Based Authorization
 
-Reuse and Refine: Adapt the local authentication routes you built in Lab 1.
-Create a POST /api/users/register endpoint.
-Create a POST /api/users/login endpoint that, on success, returns a signed JWT.
-You can reuse much of your utils/auth.js logic for signing tokens and for middleware.
-Task 4: Third-Party Authentication API
-Implement OAuth Routes: Add the GitHub OAuth routes from Lesson 4 to your user routes file.
-GET /api/users/auth/github: This route will kick off the OAuth flow by redirecting the user to GitHub.
-GET /api/users/auth/github/callback: This is your callback URL. It should use passport.authenticate, and upon successful authentication, it should sign a JWT for the user and return it to the client (e.g., via a redirect with a query parameter).
+Filter “Get All Notes”: Modify the GET / route. Instead of returning all notes in the database, it should now only return the notes where the user field matches the \_id of the currently authenticated user (req.user.\_id).
 
-# Task 5: Secure Resource API
+## Secure “Update Note”: Modify the PUT /:id route.
 
-Build CRUD Endpoints: Create a new router file for your Bookmark resources (/api/bookmarks). Implement full CRUD functionality (POST, GET All, GET One, PUT, DELETE).
-Apply Security Middleware: This is the most critical part of the assessment.
-All bookmark endpoints must be protected by authentication middleware (authMiddleware from Lesson 3). Only logged-in users should be able to interact with them.
-The endpoints must also be protected by authorization logic. Users should only be able to view, update, or delete their own bookmarks. This will require you to adapt the ownership-checking logic from Lab 2.
+Before updating a note, you must first find the note by its ID. Then, check if the user field on that note matches the authenticated user’s \_id.
 
-# Submission Instructions
+If they match, proceed with the update.
+If they do not match, return a 403 Forbidden status with an error message like "User is not authorized to update this note."
+Secure “Delete Note”: Modify the DELETE /:id route. Similar to the update route, you must check for ownership before deleting a note.
 
-Ensure your application is fully functional and all API endpoints have been tested with an API client like Insomnia or Postman.
-Test all authentication flows: registration, local login, GitHub login.
-Test all authorization rules: ensure one user cannot access another user’s bookmarks.
+## Find the note by its ID.
+
+If the user is the owner, delete the note.
+If the user is not the owner, return a 403 Forbidden status with an appropriate error message.
+(Optional) Secure “Get Single Note”: If you have a GET /:id route, apply the same ownership check there as well.
+
+## Acceptance Criteria
+
+The Note model includes a required user field referencing the User model.
+The POST /api/notes route correctly assigns the logged-in user’s ID to the new note.
+The GET /api/notes route only returns notes created by the currently logged-in user.
+The PUT /api/notes/:id and DELETE /api/notes/:id routes prevent users from modifying or deleting notes they do not own, returning a 403 status code.
+The API functions correctly for all valid requests.
+
+# Submission
+
 Submit a link to your completed GitHub repository.
+Your submission should be based on the provided starter code.
+
+# Grading
+
+This lab is worth 50 points.
+
+# Starter Code
+
+You will be provided with a starter codebase for this lab. Below are the contents of the files you will need. Create these files in your local project directory.
+
+```js
+********************************************************************************
+.gitignore
+********************************************************************************
+node_modules
+.env
+
+********************************************************************************
+.env.example
+********************************************************************************
+# Replace with your MongoDB Atlas connection string
+MONGO_URI=mongodb://127.0.0.1:27017/notesdb
+
+# Choose a long, random string for your JWT secret
+JWT_SECRET=yoursupersecretjwttoken
+
+**********************************************************************************
+server.js
+**********************************************************************************
+
+const express = require('express');
+const path = require('path');
+const db = require('./config/connection');
+const routes = require('./routes');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// if we're in production, serve client/build as static assets
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+}
+
+app.use(routes);
+
+db.once('open', () => {
+  app.listen(PORT, () => console.log(`🌍 Now listening on localhost:${PORT}`));
+});
+
+********************************************************************************
+config/connection.js
+********************************************************************************
+
+const mongoose = require('mongoose');
+
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+module.exports = mongoose.connection;
+
+********************************************************************************
+models/User.js
+********************************************************************************
+
+const { Schema, model } = require('mongoose');
+const bcrypt = require('bcrypt');
+
+const userSchema = new Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/.+@.+\..+/, 'Must use a valid email address'],
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 5,
+  },
+});
+
+// hash user password
+userSchema.pre('save', async function (next) {
+  if (this.isNew || this.isModified('password')) {
+    const saltRounds = 10;
+    this.password = await bcrypt.hash(this.password, saltRounds);
+  }
+
+  next();
+});
+
+// custom method to compare and validate password for logging in
+userSchema.methods.isCorrectPassword = async function (password) {
+  return bcrypt.compare(password, this.password);
+};
+
+const User = model('User', userSchema);
+
+module.exports = User;
+
+********************************************************************************
+models/Note.js
+********************************************************************************
+
+const { Schema, model } = require('mongoose');
+
+// This is the model you will be modifying
+const noteSchema = new Schema({
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  content: {
+    type: String,
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const Note = model('Note', noteSchema);
+
+module.exports = Note;
+
+********************************************************************************
+utils/auth.js
+********************************************************************************
+
+const jwt = require('jsonwebtoken');
+
+const secret = process.env.JWT_SECRET;
+const expiration = '2h';
+
+module.exports = {
+  authMiddleware: function (req, res, next) {
+    let token = req.body.token || req.query.token || req.headers.authorization;
+
+    if (req.headers.authorization) {
+      token = token.split(' ').pop().trim();
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: 'You must be logged in to do that.' });
+    }
+
+    try {
+      const { data } = jwt.verify(token, secret, { maxAge: expiration });
+      req.user = data;
+    } catch {
+      console.log('Invalid token');
+      return res.status(401).json({ message: 'Invalid token.' });
+    }
+
+    next();
+  },
+  signToken: function ({ username, email, _id }) {
+    const payload = { username, email, _id };
+
+    return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
+  },
+};
+
+********************************************************************************
+routes/index.js
+********************************************************************************
+
+const router = require('express').Router();
+const apiRoutes = require('./api');
+
+router.use('/api', apiRoutes);
+
+router.use((req, res) => {
+  res.status(404).send('<h1>😝 404 Error!</h1>');
+});
+
+module.exports = router;
+routes/api/index.js
+
+const router = require('express').Router();
+const userRoutes = require('./userRoutes');
+const noteRoutes = require('./noteRoutes');
+
+router.use('/users', userRoutes);
+router.use('/notes', noteRoutes);
+
+module.exports = router;
+routes/api/userRoutes.js
+
+const router = require('express').Router();
+const { User } = require('../../models');
+const { signToken } = require('../../utils/auth');
+
+// POST /api/users/register - Create a new user
+router.post('/register', async (req, res) => {
+  try {
+    const user = await User.create(req.body);
+    const token = signToken(user);
+    res.status(201).json({ token, user });
+  } catch (err) {
+    res.status(400).json(err);
+  }
+});
+
+// POST /api/users/login - Authenticate a user and return a token
+router.post('/login', async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    return res.status(400).json({ message: "Can't find this user" });
+  }
+
+  const correctPw = await user.isCorrectPassword(req.body.password);
+
+  if (!correctPw) {
+    return res.status(400).json({ message: 'Wrong password!' });
+  }
+
+  const token = signToken(user);
+  res.json({ token, user });
+});
+
+module.exports = router;
+
+********************************************************************************
+routes/api/noteRoutes.js
+********************************************************************************
+
+const router = require('express').Router();
+const { Note } = require('../../models');
+const { authMiddleware } = require('../../utils/auth');
+
+// Apply authMiddleware to all routes in this file
+router.use(authMiddleware);
+
+// GET /api/notes - Get all notes for the logged-in user
+// THIS IS THE ROUTE THAT CURRENTLY HAS THE FLAW
+router.get('/', async (req, res) => {
+  // This currently finds all notes in the database.
+  // It should only find notes owned by the logged in user.
+  try {
+    const notes = await Note.find({});
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// POST /api/notes - Create a new note
+router.post('/', async (req, res) => {
+  try {
+    const note = await Note.create({
+      ...req.body,
+      // The user ID needs to be added here
+    });
+    res.status(201).json(note);
+  } catch (err) {
+    res.status(400).json(err);
+  }
+});
+
+// PUT /api/notes/:id - Update a note
+router.put('/:id', async (req, res) => {
+  try {
+    // This needs an authorization check
+    const note = await Note.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!note) {
+      return res.status(404).json({ message: 'No note found with this id!' });
+    }
+    res.json(note);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+// DELETE /api/notes/:id - Delete a note
+router.delete('/:id', async (req, res) => {
+  try {
+    // This needs an authorization check
+    const note = await Note.findByIdAndDelete(req.params.id);
+    if (!note) {
+      return res.status(404).json({ message: 'No note found with this id!' });
+    }
+    res.json({ message: 'Note deleted!' });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+module.exports = router;
+```
